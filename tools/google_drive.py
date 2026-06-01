@@ -9,8 +9,13 @@ SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 
 def _service():
+    import base64
     creds_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
-    creds_info = json.loads(creds_json)
+    # Support both raw JSON and base64-encoded JSON
+    try:
+        creds_info = json.loads(creds_json)
+    except json.JSONDecodeError:
+        creds_info = json.loads(base64.b64decode(creds_json).decode("utf-8"))
     creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
     return build("drive", "v3", credentials=creds)
 
