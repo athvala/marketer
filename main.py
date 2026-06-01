@@ -48,6 +48,8 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
     try:
         response, updated_history = run_agent(clean_text, history)
     except Exception as e:
+        import traceback
+        print(f"ERROR in channel={channel}: {traceback.format_exc()}")
         response = f"Ups, prišlo je do napake: {str(e)}"
         updated_history = history
 
