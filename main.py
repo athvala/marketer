@@ -14,9 +14,12 @@ from claude_agent import run_agent
 slack_client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN", ""))
 
 # In-memory conversation history per channel (resets on restart)
-# For persistence upgrade to Supabase later
 conversation_histories: dict[str, list] = {}
-MAX_HISTORY = 20  # messages per channel
+MAX_HISTORY = 20
+
+# Deduplication: track processed event IDs to ignore Slack retries
+processed_events: set[str] = set()
+MAX_PROCESSED = 1000
 
 
 def verify_slack_signature(body: bytes, timestamp: str, signature: str) -> bool:
@@ -81,6 +84,15 @@ async def slack_events(request: Request, background_tasks: BackgroundTasks):
     # Slack URL verification challenge
     if payload.get("type") == "url_verification":
         return {"challenge": payload["challenge"]}
+
+    # Deduplicate retries
+    event_id = payload.get("event_id", "")
+    if event_id and event_id in processed_events:
+        return {"ok": True}
+    if event_id:
+        processed_events.add(event_id)
+        if len(processed_events) > MAX_PROCESSED:
+            processed_events.clear()
 
     event = payload.get("event", {})
     event_type = event.get("type")
