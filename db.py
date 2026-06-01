@@ -18,8 +18,21 @@ def load_history(channel_id: str) -> list:
             return row[0] if row else []
 
 
+def _serialize(obj):
+    """Convert Anthropic SDK objects to plain dicts for JSON storage."""
+    if isinstance(obj, list):
+        return [_serialize(i) for i in obj]
+    if isinstance(obj, dict):
+        return {k: _serialize(v) for k, v in obj.items()}
+    if hasattr(obj, "model_dump"):
+        return _serialize(obj.model_dump())
+    if hasattr(obj, "__dict__"):
+        return _serialize(obj.__dict__)
+    return obj
+
+
 def save_history(channel_id: str, messages: list):
-    trimmed = messages[-MAX_HISTORY:]
+    trimmed = _serialize(messages[-MAX_HISTORY:])
     with _conn() as conn:
         with conn.cursor() as cur:
             cur.execute("""
