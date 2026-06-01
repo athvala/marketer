@@ -10,12 +10,9 @@ load_dotenv()
 from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
 from slack_sdk import WebClient
 from claude_agent import run_agent
+from db import load_history, save_history
 
 slack_client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN", ""))
-
-# In-memory conversation history per channel (resets on restart)
-conversation_histories: dict[str, list] = {}
-MAX_HISTORY = 20
 
 # Deduplication: track processed event IDs to ignore Slack retries
 processed_events: set[str] = set()
@@ -38,17 +35,14 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
     if not clean_text:
         return
 
-    # Get or create conversation history for this channel
-    history = conversation_histories.setdefault(channel, [])
+    history = load_history(channel)
 
     try:
         response = run_agent(clean_text, history)
     except Exception as e:
         response = f"Ups, prišlo je do napake: {str(e)}"
 
-    # Trim history to avoid token bloat
-    if len(history) > MAX_HISTORY:
-        conversation_histories[channel] = history[-MAX_HISTORY:]
+    save_history(channel, history)
 
     slack_client.chat_postMessage(
         channel=channel,
