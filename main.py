@@ -38,9 +38,6 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
     # Get or create conversation history for this channel
     history = conversation_histories.setdefault(channel, [])
 
-    # Typing indicator
-    slack_client.reactions_add(channel=channel, name="thinking_face", timestamp=thread_ts or "")
-
     try:
         response = run_agent(clean_text, history)
     except Exception as e:
@@ -50,15 +47,12 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
     if len(history) > MAX_HISTORY:
         conversation_histories[channel] = history[-MAX_HISTORY:]
 
-    # Post reply (in thread if message was in thread)
     slack_client.chat_postMessage(
         channel=channel,
         text=response,
         thread_ts=thread_ts,
         mrkdwn=True,
     )
-
-    slack_client.reactions_remove(channel=channel, name="thinking_face", timestamp=thread_ts or "")
 
 
 @asynccontextmanager
