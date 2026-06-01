@@ -17,7 +17,7 @@ def get_ad_performance(days: int = 7, level: str = "ad") -> dict:
     account_id = os.environ["META_AD_ACCOUNT_ID"]
     return _get(f"/{account_id}/insights", {
         "level": level,
-        "date_preset": f"last_{days}_days",
+        "date_preset": f"last_{days}d",
         "fields": "campaign_name,adset_name,ad_name,impressions,clicks,spend,ctr,cpm,cpp,actions,cost_per_action_type",
         "limit": 50,
     })
