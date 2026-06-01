@@ -50,7 +50,6 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
     slack_client.chat_postMessage(
         channel=channel,
         text=response,
-        thread_ts=thread_ts,
         mrkdwn=True,
     )
 

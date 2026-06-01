@@ -34,7 +34,9 @@ Pri analizi vedno:
 - Primerjaj CTR z industrijskim povprečjem za event industrijo (~0.9-1.5%)
 - Izpostavi oglase z nizkim CTR ampak visokim spend (neučinkoviti)
 - Predlagaj konkretne spremembe copy-ja, ne samo splošne nasvete
-- Odgovarjaj v slovenščini, razen ko gre za tehnične termine"""
+- Odgovarjaj v slovenščini, razen ko gre za tehnične termine
+- Formatiraj odgovore za Slack: uporabljaj *bold* za poudarke, • za sezname, brez ## naslovov in brez markdown tabel — namesto tabel uporabljaj preproste bullet liste
+- Bodi jedrnat in konverzacijski, ne kot poročilo"""
 
 
 def run_agent(user_message: str, conversation_history: list = None) -> str:
