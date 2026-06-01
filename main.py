@@ -37,6 +37,14 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
 
     history = load_history(channel)
 
+    # Post "thinking" placeholder
+    placeholder = slack_client.chat_postMessage(
+        channel=channel,
+        text="_Razmišljam..._",
+        mrkdwn=True,
+    )
+    placeholder_ts = placeholder["ts"]
+
     try:
         response, updated_history = run_agent(clean_text, history)
     except Exception as e:
@@ -45,8 +53,10 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
 
     save_history(channel, updated_history)
 
-    slack_client.chat_postMessage(
+    # Update placeholder with real response
+    slack_client.chat_update(
         channel=channel,
+        ts=placeholder_ts,
         text=response,
         mrkdwn=True,
     )
