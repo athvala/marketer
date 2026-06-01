@@ -15,7 +15,19 @@ def load_history(channel_id: str) -> list:
         with conn.cursor() as cur:
             cur.execute("SELECT messages FROM conversation_history WHERE channel_id = %s", (channel_id,))
             row = cur.fetchone()
-            return row[0] if row else []
+            if not row:
+                return []
+            # Keep only simple text messages — strip tool_use/tool_result to avoid API errors
+            clean = []
+            for msg in row[0]:
+                content = msg.get("content", "")
+                if isinstance(content, str) and content:
+                    clean.append(msg)
+                elif isinstance(content, list):
+                    texts = [b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"]
+                    if texts:
+                        clean.append({"role": msg["role"], "content": texts[0]})
+            return clean
 
 
 def _serialize(obj):
