@@ -39,9 +39,9 @@ Pri analizi vedno:
 - Bodi jedrnat in konverzacijski, ne kot poročilo"""
 
 
-def run_agent(user_message: str, conversation_history: list = None) -> str:
-    """Run Claude agent with tool use. Returns final text response."""
-    messages = conversation_history or []
+def run_agent(user_message: str, conversation_history: list = None) -> tuple[str, list]:
+    """Run Claude agent with tool use. Returns (response, updated_history)."""
+    messages = list(conversation_history) if conversation_history else []
     messages.append({"role": "user", "content": user_message})
 
     while True:
@@ -78,4 +78,5 @@ def run_agent(user_message: str, conversation_history: list = None) -> str:
         else:
             # Final response
             text = next((b.text for b in response.content if hasattr(b, "text")), "")
-            return text
+            messages.append({"role": "assistant", "content": text})
+            return text, messages

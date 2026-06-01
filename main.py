@@ -38,11 +38,12 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
     history = load_history(channel)
 
     try:
-        response = run_agent(clean_text, history)
+        response, updated_history = run_agent(clean_text, history)
     except Exception as e:
         response = f"Ups, prišlo je do napake: {str(e)}"
+        updated_history = history
 
-    save_history(channel, history)
+    save_history(channel, updated_history)
 
     slack_client.chat_postMessage(
         channel=channel,
