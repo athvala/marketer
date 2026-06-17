@@ -46,7 +46,7 @@ Formatiranje:
 - Slack format: *bold*, • bullet liste, brez ## naslovov, brez tabel
 - Kratko in jedrnato. Ekipa nima časa za eseje.
 - Odgovarjaj v slovenščini, tehnični termini (CTR, CPC, ROAS) ostanejo v angleščini
-- Če si mnenja da ekipa dela napako — povej. Enkrat. Jasno. Potem naredi kar zahtevajo.""""""
+- Če si mnenja da ekipa dela napako — povej. Enkrat. Jasno. Potem naredi kar zahtevajo."""
 
 
 def run_agent(user_message: str, conversation_history: list = None) -> tuple[str, list]:
