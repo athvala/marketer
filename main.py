@@ -55,17 +55,26 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
 
     save_history(channel, updated_history)
 
-    # Slack text field limit ~3000 chars safe limit
-    if len(response) > 3000:
-        response = response[:2900] + "\n\n_... (odgovor predolg — vprašaj za nadaljevanje)_"
+    CHUNK_SIZE = 3000
 
-    # Update placeholder with real response
+    # Split into chunks if too long
+    chunks = [response[i:i+CHUNK_SIZE] for i in range(0, len(response), CHUNK_SIZE)]
+
+    # Update placeholder with first chunk
     slack_client.chat_update(
         channel=channel,
         ts=placeholder_ts,
-        text=response,
+        text=chunks[0],
         mrkdwn=True,
     )
+
+    # Send remaining chunks as new messages
+    for chunk in chunks[1:]:
+        slack_client.chat_postMessage(
+            channel=channel,
+            text=chunk,
+            mrkdwn=True,
+        )
 
 
 @asynccontextmanager
