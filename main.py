@@ -55,6 +55,10 @@ async def handle_message(channel: str, user: str, text: str, thread_ts: str = No
 
     save_history(channel, updated_history)
 
+    # Slack max is 40000 chars
+    if len(response) > 39000:
+        response = response[:39000] + "\n\n_... (odgovor je bil predolg, skrajšan)_"
+
     # Update placeholder with real response
     slack_client.chat_update(
         channel=channel,
