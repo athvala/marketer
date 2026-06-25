@@ -138,6 +138,11 @@ def update_ad_status(ad_id: str, status: str) -> dict:
     return r.json()
 
 
+def get_pages() -> dict:
+    """Get all Facebook Pages the ad account has access to, including Page IDs."""
+    return _get("/me/accounts", {"fields": "id,name,category,fan_count"})
+
+
 def get_audience_insights(adset_id: str) -> dict:
     """Get targeting details for an ad set."""
     return _get(f"/{adset_id}", {
@@ -166,6 +171,11 @@ TOOLS = [
     {
         "name": "get_active_ads",
         "description": "Seznam aktivnih oglasov z copy (naslov, tekst) in creative informacijami.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_pages",
+        "description": "Pridobi vse Facebook strani (Pages) z njihovimi ID-ji. Pokliči to VEDNO preden ustvarjaš oglase, da dobiš pravi Page ID.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
@@ -259,6 +269,7 @@ TOOLS = [
 
 HANDLERS = {
     "get_ad_performance": lambda inp: get_ad_performance(**inp),
+    "get_pages": lambda inp: get_pages(),
     "get_active_campaigns": lambda inp: get_active_campaigns(),
     "get_active_ads": lambda inp: get_active_ads(),
     "get_audience_insights": lambda inp: get_audience_insights(**inp),
