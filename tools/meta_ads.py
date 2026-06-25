@@ -43,6 +43,55 @@ def get_active_ads() -> dict:
     })
 
 
+def _post(endpoint: str, data: dict) -> dict:
+    data["access_token"] = os.environ["META_ACCESS_TOKEN"]
+    r = httpx.post(f"{BASE_URL}{endpoint}", json=data, timeout=15)
+    r.raise_for_status()
+    return r.json()
+
+
+def create_campaign(name: str, objective: str, daily_budget: int = None, lifetime_budget: int = None, start_time: str = None, end_time: str = None) -> dict:
+    """Create a new campaign. Budget in cents (€10 = 1000). Status always PAUSED."""
+    account_id = os.environ["META_AD_ACCOUNT_ID"]
+    data = {
+        "name": name,
+        "objective": objective,
+        "status": "PAUSED",
+        "special_ad_categories": [],
+    }
+    if daily_budget:
+        data["daily_budget"] = daily_budget
+    if lifetime_budget:
+        data["lifetime_budget"] = lifetime_budget
+    if start_time:
+        data["start_time"] = start_time
+    if end_time:
+        data["end_time"] = end_time
+    return _post(f"/{account_id}/campaigns", data)
+
+
+def create_ad_set(name: str, campaign_id: str, daily_budget: int = None, lifetime_budget: int = None, targeting: dict = None, optimization_goal: str = "REACH", billing_event: str = "IMPRESSIONS", start_time: str = None, end_time: str = None) -> dict:
+    """Create a new ad set inside a campaign. Budget in cents."""
+    account_id = os.environ["META_AD_ACCOUNT_ID"]
+    data = {
+        "name": name,
+        "campaign_id": campaign_id,
+        "optimization_goal": optimization_goal,
+        "billing_event": billing_event,
+        "status": "PAUSED",
+        "targeting": targeting or {"geo_locations": {"countries": ["SI"]}, "age_min": 18, "age_max": 65},
+    }
+    if daily_budget:
+        data["daily_budget"] = daily_budget
+    if lifetime_budget:
+        data["lifetime_budget"] = lifetime_budget
+    if start_time:
+        data["start_time"] = start_time
+    if end_time:
+        data["end_time"] = end_time
+    return _post(f"/{account_id}/adsets", data)
+
+
 def create_ad_creative(page_id: str, title: str, body: str, image_url: str = None, link_url: str = None) -> dict:
     """Create a new ad creative."""
     account_id = os.environ["META_AD_ACCOUNT_ID"]
@@ -120,6 +169,41 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "create_campaign",
+        "description": "Ustvari novo Facebook kampanjo (campaign level). Vedno PAUSED. Budget v centih (€10 = 1000).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Ime kampanje"},
+                "objective": {"type": "string", "enum": ["OUTCOME_AWARENESS", "OUTCOME_TRAFFIC", "OUTCOME_ENGAGEMENT", "OUTCOME_LEADS", "OUTCOME_SALES"], "description": "Cilj kampanje"},
+                "daily_budget": {"type": "integer", "description": "Dnevni budget v centih (npr. 1000 = €10)"},
+                "lifetime_budget": {"type": "integer", "description": "Skupni budget v centih"},
+                "start_time": {"type": "string", "description": "ISO 8601 format: 2026-06-15T08:00:00+0200"},
+                "end_time": {"type": "string", "description": "ISO 8601 format: 2026-07-04T19:00:00+0200"},
+            },
+            "required": ["name", "objective"],
+        },
+    },
+    {
+        "name": "create_ad_set",
+        "description": "Ustvari nov ad set znotraj kampanje. Targeting, budget, optimizacija. Vedno PAUSED.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "campaign_id": {"type": "string", "description": "ID kampanje (iz create_campaign)"},
+                "daily_budget": {"type": "integer", "description": "Dnevni budget v centih"},
+                "lifetime_budget": {"type": "integer", "description": "Skupni budget v centih"},
+                "optimization_goal": {"type": "string", "enum": ["REACH", "LINK_CLICKS", "CONVERSIONS", "LANDING_PAGE_VIEWS", "IMPRESSIONS"], "default": "REACH"},
+                "billing_event": {"type": "string", "enum": ["IMPRESSIONS", "LINK_CLICKS"], "default": "IMPRESSIONS"},
+                "targeting": {"type": "object", "description": "Meta targeting objekt: geo_locations, age_min, age_max, interests, behaviors itd."},
+                "start_time": {"type": "string"},
+                "end_time": {"type": "string"},
+            },
+            "required": ["name", "campaign_id"],
+        },
+    },
+    {
         "name": "create_ad_creative",
         "description": "Ustvari nov ad creative v Meta Ads (naslov, tekst, slika, link). Uporabi ko imaš pripravljen copy in želiš direktno objaviti oglas.",
         "input_schema": {
@@ -178,6 +262,8 @@ HANDLERS = {
     "get_active_campaigns": lambda inp: get_active_campaigns(),
     "get_active_ads": lambda inp: get_active_ads(),
     "get_audience_insights": lambda inp: get_audience_insights(**inp),
+    "create_campaign": lambda inp: create_campaign(**inp),
+    "create_ad_set": lambda inp: create_ad_set(**inp),
     "create_ad_creative": lambda inp: create_ad_creative(**inp),
     "create_ad": lambda inp: create_ad(**inp),
     "update_ad_status": lambda inp: update_ad_status(**inp),
